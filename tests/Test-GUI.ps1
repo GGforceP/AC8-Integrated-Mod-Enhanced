@@ -58,6 +58,17 @@ Expect-Code {Invoke-AC8GuiAction Start $package $game $steam 'full'} 'UNSAVED'
 $null=Invoke-AC8GuiAction Save $package $game $steam 'full'
 Expect-Code {Invoke-AC8GuiAction Start $package $game $steam 'guidance'} 'UNSAVED'
 Pass 'guidance/full are distinct even though both enable the missile module'
+$hotasPath=Join-Path $package 'hotas-weapon-stats.ini'
+if(Read-AC8HotasWeaponStats $hotasPath){throw 'HOTAS enabled on a fresh installation'}
+Expect-Code {Invoke-AC8GuiAction Start $package $game $steam 'full' -HotasWeaponStats $true} 'UNSAVED'
+$saved=Invoke-AC8GuiAction Save $package $game $steam 'none' -HotasWeaponStats $true
+if(!$saved.Success -or $saved.Message -notmatch 'HOTAS' -or !(Read-AC8HotasWeaponStats $hotasPath)){throw 'GUI did not persist HOTAS independently'}
+$null=Invoke-AC8GuiAction Save $package $game $steam 'guidance'
+if(!(Read-AC8HotasWeaponStats $hotasPath)){throw 'A mode-only save reset HOTAS'}
+Expect-Code {Invoke-AC8GuiAction Start $package $game $steam 'guidance' -HotasWeaponStats $false} 'UNSAVED'
+$null=Invoke-AC8GuiAction Save $package $game $steam 'guidance' -HotasWeaponStats $false
+if(Read-AC8HotasWeaponStats $hotasPath){throw 'Unchecking HOTAS was not saved'}
+Pass 'HOTAS checkbox saves both states and participates in the launch preflight'
 foreach($legacy in 0,1){
  Set-Content -LiteralPath (Join-Path $package 'features.ini') -Value "missile_enhancement=$legacy" -Encoding ASCII
  $mode=(Read-FeatureSettings (Join-Path $package 'features.ini')).MissileMode
@@ -75,14 +86,14 @@ Pass 'invalid mode rejected before configuration mutation'
 Pass 'running game blocks configuration mutation'
 # Force partial settings replacement to fail; even originally-empty files must be restored byte-for-byte.
 [IO.File]::WriteAllBytes((Join-Path $package 'steam-path.txt'),[byte[]]@())
-$names=@('game-path.txt','steam-path.txt','features.ini','Steam-Launch-Option.txt')
+$names=@('game-path.txt','steam-path.txt','features.ini','Steam-Launch-Option.txt','hotas-weapon-stats.ini')
 $original=@{};foreach($name in $names){$original[$name]=[Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $package $name)))}
 & {
  function Move-Item {param($LiteralPath,$Destination,[switch]$Force)
-  if([IO.Path]::GetFileName($Destination) -eq 'features.ini'){throw 'TEST_CONFIG_REPLACE_FAILURE'}
+  if([IO.Path]::GetFileName($Destination) -eq 'hotas-weapon-stats.ini'){throw 'TEST_CONFIG_REPLACE_FAILURE'}
   Microsoft.PowerShell.Management\Move-Item -LiteralPath $LiteralPath -Destination $Destination -Force:$Force
  }
- $caught=$false;try{Save-AC8GuiSettings $package 'other-game' 'other-steam' 'full'}catch{if($_.Exception.Message -ne 'TEST_CONFIG_REPLACE_FAILURE'){throw};$caught=$true}
+ $caught=$false;try{Save-AC8GuiSettings $package 'other-game' 'other-steam' 'full' $true}catch{if($_.Exception.Message -ne 'TEST_CONFIG_REPLACE_FAILURE'){throw};$caught=$true}
  if(!$caught){throw 'Expected configuration write failure'}
 }
 foreach($name in $names){if([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $package $name))) -ne $original[$name]){throw "Rollback changed $name"}}

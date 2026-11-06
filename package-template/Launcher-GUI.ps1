@@ -24,7 +24,7 @@ $script:themeMode=$Theme
 Set-CreeperUXTheme $window $script:themeMode
 Set-AC8WindowIcon $window
 $script:controls=@{}
-foreach($name in 'GamePath','SteamPath','BrowseGame','BrowseSteam','GuidanceOnly','MouseOnly','FullInstall','Check','Save','Start','CopyOption','LaunchOption','Recover','OpenLogs','StatusTitle','StatusMessage','StatusCard','BusyBar','PreviewRoot','ThemeToggle','StatusMark','ModeDescription','Detect','GameCandidates','SteamCandidates','PackageVersion','DisableMod','EnableMod','Keybindings','FlightRecording','ExtraMods','AppUpdate','AppRepair','AutoUpdate'){$script:controls[$name]=$window.FindName($name)}
+foreach($name in 'GamePath','SteamPath','BrowseGame','BrowseSteam','GuidanceOnly','MouseOnly','FullInstall','HotasWeaponStats','Check','Save','Start','CopyOption','LaunchOption','Recover','OpenLogs','StatusTitle','StatusMessage','StatusCard','BusyBar','PreviewRoot','ThemeToggle','StatusMark','ModeDescription','Detect','GameCandidates','SteamCandidates','PackageVersion','DisableMod','EnableMod','Keybindings','FlightRecording','ExtraMods','AppUpdate','AppRepair','AutoUpdate'){$script:controls[$name]=$window.FindName($name)}
 $script:worker=$null;$script:async=$null;$script:option=''
 $infoPath=Join-Path $PSScriptRoot 'package-info.json'
 if(Test-Path -LiteralPath $infoPath){
@@ -39,7 +39,7 @@ function Set-AC8GuiStatus([string]$Title,[string]$Message,[bool]$Success=$true){
  $script:controls.StatusMark.SetResourceReference([Windows.Controls.Border]::BackgroundProperty,$key)
 }
 function Set-AC8GuiBusy([bool]$Busy){
- foreach($name in 'GamePath','SteamPath','BrowseGame','BrowseSteam','GuidanceOnly','MouseOnly','FullInstall','Check','Detect','Save','Start','Recover','GameCandidates','SteamCandidates','DisableMod','EnableMod','Keybindings','FlightRecording','ExtraMods','AppUpdate','AppRepair','AutoUpdate'){$script:controls[$name].IsEnabled=!$Busy}
+ foreach($name in 'GamePath','SteamPath','BrowseGame','BrowseSteam','GuidanceOnly','MouseOnly','FullInstall','HotasWeaponStats','Check','Detect','Save','Start','Recover','GameCandidates','SteamCandidates','DisableMod','EnableMod','Keybindings','FlightRecording','ExtraMods','AppUpdate','AppRepair','AutoUpdate'){$script:controls[$name].IsEnabled=!$Busy}
  $script:controls.BusyBar.IsIndeterminate=[Windows.SystemParameters]::ClientAreaAnimation
  $script:controls.BusyBar.Value=50
  $script:controls.BusyBar.Visibility=if($Busy){'Visible'}else{'Collapsed'}
@@ -50,7 +50,7 @@ function Start-AC8GuiWork([string]$Action,[bool]$Confirm=$false){
  if($Action -ne 'UpdateAuto'){Set-AC8GuiStatus '正在处理…' '请稍候，完成后会在这里显示结果。'}
  try {
   $script:worker=[PowerShell]::Create()
-  [void]$script:worker.AddCommand((Join-Path $PSScriptRoot 'Gui-Worker.ps1')).AddParameter('Action',$Action).AddParameter('Root',$PSScriptRoot).AddParameter('GamePath',$script:controls.GamePath.Text).AddParameter('SteamPath',$script:controls.SteamPath.Text).AddParameter('MissileMode',(Get-AC8GuiSelectedMode $script:controls)).AddParameter('ConfirmRecovery',$Confirm)
+  [void]$script:worker.AddCommand((Join-Path $PSScriptRoot 'Gui-Worker.ps1')).AddParameter('Action',$Action).AddParameter('Root',$PSScriptRoot).AddParameter('GamePath',$script:controls.GamePath.Text).AddParameter('SteamPath',$script:controls.SteamPath.Text).AddParameter('MissileMode',(Get-AC8GuiSelectedMode $script:controls)).AddParameter('ConfirmRecovery',$Confirm).AddParameter('HotasWeaponStats',[bool]$script:controls.HotasWeaponStats.IsChecked)
   $script:async=$script:worker.BeginInvoke()
   $timer.Start()
  }catch{
@@ -103,9 +103,9 @@ function Request-AC8AppUpdate([string]$Version){
 function Update-AC8GuiModeDescription {
  $mode=Get-AC8GuiSelectedMode $script:controls
  $script:controls.ModeDescription.Text=switch($mode){
-  'guidance'{'仅调整比例引导，保留原版性能、近炸设置与外观。'}
+  'guidance'{'启用比例引导，近炸设置与外观沿用原版。'}
   'full'{'启用比例引导、性能强化、近炸设置与外观替换。'}
-  'none'{'仅安装鼠标飞控，所有导弹保持原版。'}
+  'none'{'安装鼠标飞控，HOTAS 武器数值可单独启用。'}
  }
 }
 foreach($name in 'GuidanceOnly','FullInstall','MouseOnly'){$script:controls[$name].Add_Checked({Update-AC8GuiModeDescription})}
@@ -203,6 +203,7 @@ if($SmokeTest){
   if($checked.Count -ne 1 -or !$script:controls.ModeDescription.Text){throw 'GUI mode selection is not exclusive or lacks description'}
  }
  Set-AC8GuiSelectedMode $script:controls (Read-FeatureSettings (Join-Path $script:dataRoot 'features.ini')).MissileMode
+ $script:controls.HotasWeaponStats.IsChecked=Read-AC8HotasWeaponStats (Join-Path $script:dataRoot 'hotas-weapon-stats.ini')
  # Verify the token adapter and actual theme button before the background-action smoke.
  $before=$script:themeMode
  $script:controls.ThemeToggle.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))

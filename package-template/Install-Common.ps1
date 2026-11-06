@@ -88,7 +88,13 @@ function Get-AC8ConsoleBanner([string]$PackageRoot,$Validation) {
  # Console text from the package's own metadata (until 2.4.2 a fixed "AC8 2.3.5 ... F4 CLASSIC/AGILE ... candidate" text).
  $info=$null
  try{$info=Get-Content -LiteralPath (Join-Path $PackageRoot 'package-info.json') -Raw -Encoding UTF8|ConvertFrom-Json}catch{$info=$null}
- $version=if($info -and $info.native_controller_version){[string]$info.native_controller_version}elseif($info -and $info.version){[string]$info.version}else{'(unknown version)'}
+ $version=[string]$info.version
+ $controller=[string]$info.native_controller_version
+ if($controller){
+  if(!$version -or $controller -eq $version -or $controller.StartsWith($version+' ',[StringComparison]::Ordinal)){$version=$controller}
+  else{$version+=' [flight controller '+$controller+']'}
+ }
+ if(!$version){$version='(unknown version)'}
  $candidate=($null -ne $Validation) -and ($Validation.candidateOnly -eq $true)
  $title='AC8 Integrated Mod '+$version+$(if($candidate){' [local candidate]'}else{''})+' - F4 PEACE/WAR flight control, optional missile module. Single-player only. Keep this console open.'
  $keys='Mouse Aim: select Expert controls. F4 PEACE/WAR; F8 instructor; F9 recenter; F3 camera; F7 HUD, Alt+F7 gun cross; F10 reload settings; free-look/zoom keys from Keybindings.ini.'
@@ -113,13 +119,16 @@ function Get-AC8ReadinessDiagnosis([string]$LogPath,$Features,[string[]]$Missing
  $text=''
  try{$stream=[IO.File]::Open($LogPath,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]'ReadWrite,Delete');$reader=New-Object IO.StreamReader($stream);try{$text=$reader.ReadToEnd()}finally{$reader.Dispose()}}catch{return '无法读取 UE4SS.log：'+$_.Exception.Message}
  $failed=[regex]::Match($text,'\[AC8SourceInit\] SOURCE_FAILED reason=([^\r\n]*)')
- if($failed.Success){return '导弹模块初始化失败（'+$failed.Groups[1].Value.Trim()+'）。鼠标飞控不受影响；可以先改用“仅鼠标飞控”，反馈时请附上本次会话的 UE4SS.log。'}
+ if($failed.Success){
+  $hint=if($Features.HotasWeaponStats){'可以关闭 HOTAS 武器数值后重试。'}else{'可以先改用“仅鼠标飞控”。'}
+  return '导弹模块初始化失败（'+$failed.Groups[1].Value.Trim()+'）。'+$hint+'反馈时请附上本次会话的 UE4SS.log。'
+ }
  if($text -notmatch '\[AC8MouseAim\].*Loaded\.'){
   $hint='UE4SS 已启动，但鼠标飞控模块还没有加载。'
   if($ExtraMods){$hint+='若一直如此，请先停用附加 Mod（文件夹名前加 _）再试。'}else{$hint+='若一直如此，请保留 UE4SS.log 并反馈。'}
   return $hint
  }
- if($Features.MissileEnhancement){
+ if($Features.MissileEnhancement -or $Features.HotasWeaponStats){
   if($text -notmatch '\[AC8SourceInit\]'){return '鼠标飞控已加载，导弹模块没有加载。请保留 UE4SS.log 并反馈；可以先改用“仅鼠标飞控”。'}
   return '鼠标飞控已加载，导弹模块仍在等待游戏数据（通常进入主菜单后完成）。可以继续游戏，结果会写入日志。'
  }

@@ -1,4 +1,9 @@
-﻿function Read-FeatureSettings([string]$Path) {
+﻿function Read-AC8HotasWeaponStats([string]$Path) {
+ if(!(Test-Path -LiteralPath $Path)){return $false}
+ if([IO.File]::ReadAllText($Path).Trim() -notmatch '^enabled=([01])$'){throw 'Invalid HOTAS setting. Use enabled=0 or enabled=1.'}
+ return $Matches[1] -eq '1'
+}
+function Read-FeatureSettings([string]$Path,[bool]$HotasWeaponStats=$false) {
  $mode='full';$seen=$false
  if(Test-Path -LiteralPath $Path){
   foreach($line in Get-Content -LiteralPath $Path){
@@ -11,7 +16,7 @@
   }
  }
  $count=switch($mode){'guidance'{32} 'full'{375} 'none'{0}}
- return [pscustomobject]@{MissileMode=$mode;MissileEnhancement=($mode -ne 'none');ExpectedFields=$count}
+ return [pscustomobject]@{MissileMode=$mode;MissileEnhancement=($mode -ne 'none');ExpectedFields=$count;HotasWeaponStats=$HotasWeaponStats}
 }
 function Get-AC8ExtraModNameProblem([string]$Name) {
  # Folder names usable as UE4SS mod names (mods.txt), not taken by this package's own components.
@@ -53,12 +58,14 @@ function Install-SelectedUE4SS([string]$PayloadRoot,[string]$Destination,$Featur
  Copy-Item -LiteralPath (Join-Path $source 'Mods/AC8MouseAim') -Destination $mods -Recurse
  # UE4SS shared Lua library (UEHelpers) of the same UE4SS build, used by many other Lua mods.
  $shared=Join-Path $source 'Mods/shared';if(Test-Path -LiteralPath $shared){Copy-Item -LiteralPath $shared -Destination $mods -Recurse}
- if($Features.MissileEnhancement){
+ if($Features.MissileEnhancement -or $Features.HotasWeaponStats){
   Copy-Item -LiteralPath (Join-Path $source 'Mods/AC8SourceInit') -Destination $mods -Recurse
-  Set-Content -LiteralPath (Join-Path $mods 'AC8SourceInit/Scripts/installation_mode.lua') -Value ("return '"+$Features.MissileMode+"'") -Encoding ASCII
+  $selection="return '"+$Features.MissileMode+"'"
+  if($Features.HotasWeaponStats){$selection="return {mode='"+$Features.MissileMode+"',hotas=true}"}
+  Set-Content -LiteralPath (Join-Path $mods 'AC8SourceInit/Scripts/installation_mode.lua') -Value $selection -Encoding ASCII
  }
  $lines=@('AC8MouseAim : 1')
- if($Features.MissileEnhancement){$lines=@('AC8SourceInit : 1')+$lines}
+ if($Features.MissileEnhancement -or $Features.HotasWeaponStats){$lines=@('AC8SourceInit : 1')+$lines}
  # Extra mods load after this package's own mods (mods.txt order).
  foreach($extra in @($ExtraMods | Where-Object {$_ -and !$_.Problem})){
   Copy-Item -LiteralPath $extra.Path -Destination (Join-Path $mods $extra.Name) -Recurse
@@ -67,6 +74,7 @@ function Install-SelectedUE4SS([string]$PayloadRoot,[string]$Destination,$Featur
  Set-Content -LiteralPath (Join-Path $mods 'mods.txt') -Value $lines -Encoding ASCII
 }
 function Get-FeatureReadinessPattern($Features) {
+ if($Features.HotasWeaponStats){return '\[AC8SourceInit\].*SOURCE_APPLIED mode='+$Features.MissileMode+'\b.*verified='+$Features.ExpectedFields+'\b.*hotas_stats=[1-9]\d* hotas_ammo=[1-9]\d*\b'}
  if($Features.MissileEnhancement){return '\[AC8SourceInit\].*SOURCE_APPLIED mode='+$Features.MissileMode+'\b.*verified='+$Features.ExpectedFields+'\b'}
  return '\[AC8MouseAim\].*Loaded\.'
 }

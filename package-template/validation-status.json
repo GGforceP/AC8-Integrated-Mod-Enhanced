@@ -2,7 +2,7 @@
   "deploymentAllowed": true,
   "candidateOnly": false,
   "releaseAccepted": true,
-  "scope": "Steam Build 26002268. Offline Su-35 mission checked mouse flight, WAR/PEACE, keyboard takeover, camera switching, free look, HUD and the HMD toggle. Full missile data initialization and the v2.5.2 in-place upgrade were verified.",
+  "scope": "Steam Build 26002268. Full mode and HOTAS readback on startup and in an offline Su-35 mission. Verified 130 weapon fields and 7681 reserve-ammo fields, including repeated mission loads.",
   "nativeControllerVersion": "2.6.0",
   "gameBuild": "26002268"
 }

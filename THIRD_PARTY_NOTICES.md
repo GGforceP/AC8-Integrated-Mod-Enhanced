@@ -14,6 +14,7 @@ Original integration code and modifications are provided under the root MIT lice
 |---|---|
 | AC8 Mouse Aim base | [FletcherMiya/AC8-Mouse-Aim](https://github.com/FletcherMiya/AC8-Mouse-Aim), inspected source snapshot `0d6e8a7`; upstream LICENSE declares CC0 1.0. Preserve `licenses/MouseAim/LICENSE.txt` |
 | MouseFlight reference | [brihernandez/MouseFlight](https://github.com/brihernandez/MouseFlight), MIT, Brian Hernandez; see `licenses/MouseAim/MouseFlight-LICENSE.txt` |
+| HOTAS weapon data | [AquilaZGame/Modern Missile Mod 1.1.0](https://www.nexusmods.com/acecombat8wingsoftheve/mods/154?tab=description), MIT. The optional preset uses selected player weapon values and ammo multipliers. See `licenses/ModernMissileMod-LICENSE.txt`. |
 | MinHook / bundled HDE | [TsudaKageyu/minhook](https://github.com/TsudaKageyu/minhook), BSD-style notices preserved in `native/src/vendor/minhook/LICENSE.txt` and `licenses/MouseAim/MinHook-LICENSE.txt` |
 | RE-UE4SS | [UE4SS-RE/RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS), MIT, Narknon and contributors; pinned runtime 3.0.1-1152-ge3ba1016. Header snapshots use explicit standard includes and a `std::format` adaptation |
 

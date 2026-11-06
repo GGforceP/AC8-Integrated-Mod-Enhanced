@@ -11,7 +11,7 @@ $b=Banner ([pscustomobject]@{version='2.4.2';native_controller_version='2.4.2 (W
 if($b.Title -notlike 'AC8 Integrated Mod 2.4.2 (WAR 13.8) - F4 PEACE/WAR*' -or $b.Title -like '*candidate*' -or $b.Ready -like '*candidate*'){throw "release banner: $($b.Title) / $($b.Ready)"}
 if($b.Keys -notlike '*F4 PEACE/WAR*' -or $b.Keys -notlike '*Alt+F7 gun cross*'){throw "keys line: $($b.Keys)"}
 $c=Banner ([pscustomobject]@{version='2.3.17-keybindings-preview.1';native_controller_version='2.4.2-war.13.8'}) ([pscustomobject]@{candidateOnly=$true})
-if($c.Title -notlike 'AC8 Integrated Mod 2.4.2-war.13.8 `[local candidate`]*' -or $c.Ready -notlike 'Local candidate build*'){throw "candidate banner: $($c.Title) / $($c.Ready)"}
+if(!$c.Title.StartsWith('AC8 Integrated Mod 2.3.17-keybindings-preview.1 [flight controller 2.4.2-war.13.8] [local candidate]') -or $c.Ready -notlike 'Local candidate build*'){throw "candidate banner: $($c.Title) / $($c.Ready)"}
 $d=Banner ([pscustomobject]@{version='2.4.2'}) $null;if($d.Title -notlike 'AC8 Integrated Mod 2.4.2 - *'){throw "version fallback: $($d.Title)"}
 $e=Banner $null $null;if($e.Title -notlike '*(unknown version)*'){throw "missing package-info: $($e.Title)"}
 $launch=Get-Content -LiteralPath (Join-Path $template 'Launch-Offline.ps1') -Raw

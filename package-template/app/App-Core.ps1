@@ -285,6 +285,9 @@ function Repair-AC8PlayerSettings([string]$DataRoot,[string]$PackageRoot){
   @{Name='features.ini';Label='安装范围';Read={param($p) $null=Read-FeatureSettings $p}},
   @{Name='Keybindings.ini';Label='键位设置';Read={param($p) $null=Read-AC8Keybindings $p}}
  )
+ if([IO.File]::Exists([IO.Path]::Combine($PackageRoot,'hotas-weapon-stats.ini'))){
+  $checks+=@{Name='hotas-weapon-stats.ini';Label='HOTAS 武器数值';Read={param($p) $null=Read-AC8HotasWeaponStats $p}}
+ }
  foreach($check in $checks){
   $path=[IO.Path]::Combine($DataRoot,$check.Name);$template=[IO.Path]::Combine($PackageRoot,$check.Name)
   if(![IO.File]::Exists($path)){[IO.File]::Copy($template,$path);$report+=[pscustomobject]@{Item=$check.Label;Status='fixed';Message=($check.Name+' 缺失，已恢复默认。')};continue}
@@ -321,7 +324,9 @@ function Initialize-AC8AppData([string]$InstallRoot,[string]$PackageRoot,[string
  # migrations). Existing player files are never replaced here.
  $data=[IO.Path]::Combine($InstallRoot,'data');[void][IO.Directory]::CreateDirectory($data)
  $report=@()
- foreach($name in 'MouseAim-Settings.ini','Keybindings.ini','features.ini','game-path.txt','steam-path.txt'){
+ $settings=@('MouseAim-Settings.ini','Keybindings.ini','features.ini','game-path.txt','steam-path.txt')
+ if([IO.File]::Exists([IO.Path]::Combine($PackageRoot,'hotas-weapon-stats.ini'))){$settings+='hotas-weapon-stats.ini'}
+ foreach($name in $settings){
   $target=[IO.Path]::Combine($data,$name);if([IO.File]::Exists($target)){continue}
   $source=[IO.Path]::Combine($PackageRoot,$name)
   if($ImportFrom){$old=[IO.Path]::Combine($ImportFrom,$name);if([IO.File]::Exists($old)){$source=$old;$report+=[pscustomobject]@{Item='导入';Status='fixed';Message=('已导入 '+$name)}}}

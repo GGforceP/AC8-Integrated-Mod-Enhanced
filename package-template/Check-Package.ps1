@@ -24,6 +24,7 @@ foreach($item in $manifest){
 $settingsRoot=Get-AC8DataRoot $PackageRoot
 $null=Read-MouseSettings (Join-Path $settingsRoot 'MouseAim-Settings.ini')
 $null=Read-FeatureSettings (Join-Path $settingsRoot 'features.ini')
+$null=Read-AC8HotasWeaponStats (Join-Path $settingsRoot 'hotas-weapon-stats.ini')
 . (Join-Path $PSScriptRoot 'Keybinding-Settings.ps1')
 $null=Read-AC8Keybindings (Join-Path $settingsRoot 'Keybindings.ini')
 Write-Host 'PACKAGE CHECK passed: required files, deployment gate, payload hashes and settings. No game started.'

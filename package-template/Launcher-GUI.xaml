@@ -65,9 +65,17 @@
      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
       <RadioButton x:Name="GuidanceOnly" GroupName="Features" Margin="0,0,8,0" Padding="10" AutomationProperties.Name="飞控加仅比例引导"><StackPanel><TextBlock Text="仅比例引导" FontWeight="SemiBold"/><TextBlock Text="原版性能与外观" FontSize="11" Margin="0,4,0,0"/></StackPanel></RadioButton>
       <RadioButton x:Name="FullInstall" Grid.Column="1" GroupName="Features" Margin="0,0,8,0" Padding="10" IsChecked="True" AutomationProperties.Name="飞控加完整导弹强化"><StackPanel><TextBlock Text="完整导弹强化" FontWeight="SemiBold"/><TextBlock Text="启用全部强化" FontSize="11" Margin="0,4,0,0"/></StackPanel></RadioButton>
-      <RadioButton x:Name="MouseOnly" Grid.Column="2" GroupName="Features" Padding="10" AutomationProperties.Name="仅鼠标飞控"><StackPanel><TextBlock Text="仅鼠标飞控" FontWeight="SemiBold"/><TextBlock Text="原版导弹" FontSize="11" Margin="0,4,0,0"/></StackPanel></RadioButton>
+      <RadioButton x:Name="MouseOnly" Grid.Column="2" GroupName="Features" Padding="10" AutomationProperties.Name="仅鼠标飞控"><StackPanel><TextBlock Text="仅鼠标飞控" FontWeight="SemiBold"/><TextBlock Text="基础武器参数" FontSize="11" Margin="0,4,0,0"/></StackPanel></RadioButton>
      </Grid>
      <TextBlock x:Name="ModeDescription" Text="启用比例引导、性能强化、近炸设置与外观替换。" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource CxMuted}" Margin="0,8,0,0"/>
+     <Border BorderBrush="{DynamicResource CxLine}" BorderThickness="0,1,0,0" Margin="0,14,0,0" Padding="0,12,0,0">
+      <CheckBox x:Name="HotasWeaponStats" AutomationProperties.Name="启用 HOTAS 武器数值">
+       <StackPanel>
+        <TextBlock Text="启用 HOTAS 武器数值" FontWeight="SemiBold"/>
+        <TextBlock Text="锁定距离、备弹与伤害 · 保存后下次离线启动生效" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource CxMuted}" Margin="0,4,0,0"/>
+       </StackPanel>
+      </CheckBox>
+     </Border>
      <WrapPanel Margin="0,20,0,0"><Button x:Name="Detect" Content="自动定位" Margin="0,0,8,0"/><Button x:Name="Check" Content="检查环境" Margin="0,0,8,0"/><Button x:Name="Save" Content="保存设置" Tag="primary"/></WrapPanel>
     </StackPanel></Border>
     <StackPanel Grid.Column="1">

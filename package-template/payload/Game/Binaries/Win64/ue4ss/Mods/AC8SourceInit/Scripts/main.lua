@@ -28,7 +28,10 @@ local function applyAt(reason)
   log('SOURCE_FAILED reason='..reason..' '..tostring(result.error)..' rollbackErrors='..tostring(#(result.rollbackErrors or{})))
   return
  end
- log('SOURCE_APPLIED mode='..(config.missile_mode or 'full')..' reason='..reason..' verified='..result.verified..' written='..result.written)
+ local verified=result.baseVerified or result.verified
+ local line='SOURCE_APPLIED mode='..(config.missile_mode or 'full')..' reason='..reason..' verified='..verified..' written='..result.written
+ if config.hotas then line=line..' hotas_stats='..result.hotasStats..' hotas_ammo='..result.hotasAmmo end
+ log(line)
  if visuals then
   local ok,err=pcall(visuals.prepare)
   if not ok then print('[AC8MSLVisual] PREPARE_FAILED '..tostring(err)..'\n')end

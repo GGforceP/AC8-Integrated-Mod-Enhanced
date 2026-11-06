@@ -104,7 +104,7 @@ foreach($saveFile in $before){if((Get-AC8FileHash -LiteralPath (Join-Path $saveB
 foreach($migration in @(Invoke-AC8SettingsMigrations $data)){if($migration -eq 'war-default-2.5.0'){Write-Host 'SETTINGS: startup flight control is now WAR (default since 2.5). F4 switches to PEACE.'}}
 $mouseSettings=Read-MouseSettings (Join-Path $data 'MouseAim-Settings.ini')
 . (Join-Path $root 'Feature-Settings.ps1')
-$features=Read-FeatureSettings (Join-Path $data 'features.ini')
+$features=Read-FeatureSettings (Join-Path $data 'features.ini') (Read-AC8HotasWeaponStats (Join-Path $data 'hotas-weapon-stats.ini'))
 $readinessPattern=Get-FeatureReadinessPattern $features
 $features | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $results 'feature-selection.json') -Encoding UTF8
 $payload=Join-Path $root 'payload/Game/Binaries/Win64'
@@ -120,6 +120,9 @@ try {
  New-Item -ItemType Directory -Path (Join-Path $w64 'ue4ss') | Out-Null
  Set-Content -LiteralPath (Join-Path $w64 'ue4ss/AC8SourceInit-owner.txt') -Value $id -Encoding ASCII
  $extraMods=@(Get-AC8ExtraMods $data)
+ if($features.HotasWeaponStats -and @($extraMods | Where-Object {$_.Name -ieq 'ModernMissileMod' -and !$_.Problem}).Count){
+  Stop-AC8Problem 'HOTAS_MOD_CONFLICT' '内置 HOTAS 与附加 Mod ModernMissileMod 会修改同一批武器。' '请在启动器中择一启用。'
+ }
  Install-SelectedUE4SS (Join-Path $payload 'ue4ss') (Join-Path $w64 'ue4ss') $features $extraMods
  # Cleanup removes deployed extra-mod copies that still match ue4ss-mods instead of archiving them (2.5.2).
  $state.ExtraMods=@($extraMods | Where-Object {!$_.Problem} | ForEach-Object {[pscustomobject]@{Name=$_.Name;Source=$_.Path}})
@@ -141,6 +144,7 @@ try {
  Write-Host $banner.Title
  Write-Host $banner.Keys
  Write-Host ('FEATURES: mouse flight; missile mode='+$features.MissileMode)
+ if($features.HotasWeaponStats){Write-Host 'FEATURES: HOTAS lock-on range, reserve ammunition and damage'}
  $usableExtra=@($extraMods | Where-Object {!$_.Problem})
  if($extraMods.Count){Write-Host ('EXTRA UE4SS MODS (ue4ss-mods): '+$(if($usableExtra.Count){($usableExtra | ForEach-Object {$_.Name+' ['+$_.Kind+']'}) -join ', '}else{'none loaded'}))}
  foreach($skipped in @($extraMods | Where-Object {$_.Problem})){Write-Host ('  skipped '+$skipped.Name+': '+$skipped.Problem) -ForegroundColor Yellow}
@@ -160,7 +164,8 @@ try {
   [void]$game.WaitForExit(500)
  }
  if($ready){
-  if($features.MissileEnhancement){Write-Host ('[SOURCE READY] mode='+$features.MissileMode+' verified='+$features.ExpectedFields+'; actual missile behavior depends on game mechanics.')}else{Write-Host '[MOUSE READY] Mouse module loaded; original missile behavior preserved.'}
+  if($features.HotasWeaponStats){Write-Host ('[SOURCE READY] mode='+$features.MissileMode+'; HOTAS weapon fields and reserve ammunition verified.')}
+  elseif($features.MissileEnhancement){Write-Host ('[SOURCE READY] mode='+$features.MissileMode+' verified='+$features.ExpectedFields+'; actual missile behavior depends on game mechanics.')}else{Write-Host '[MOUSE READY] Mouse module loaded; original missile behavior preserved.'}
   Write-Host $banner.Ready
  }elseif(!$game.HasExited){
   Write-Host '[NOT READY] The selected feature set has not reported readiness. Check the archived log.'

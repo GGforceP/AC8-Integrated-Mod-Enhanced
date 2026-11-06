@@ -28,6 +28,25 @@ foreach($mode in @('none','guidance','full')){
  if($mode -eq 'guidance' -and '[AC8SourceInit] SOURCE_APPLIED mode=guidance verified=320' -match $pattern){throw 'Wrong guidance count accepted'}
  $caught=$false;try{Install-SelectedUE4SS $source $dest $selection}catch{$caught=$true};if(!$caught){throw 'Dirty staging accepted'}
 }
+$hotasPath=Join-Path $tempRoot 'hotas-weapon-stats.ini'
+if(Read-AC8HotasWeaponStats $hotasPath){throw 'Existing installations must default to HOTAS off'}
+Set-Content -LiteralPath $hotasPath -Value 'enabled=1' -Encoding ASCII
+foreach($mode in 'none','guidance','full'){
+ $cfg=Join-Path $tempRoot "features-$mode.ini"
+ $selection=Read-FeatureSettings $cfg (Read-AC8HotasWeaponStats $hotasPath)
+ $dest=Join-Path $tempRoot "hotas-$mode"
+ New-Item -ItemType Directory -Path $dest | Out-Null
+ Install-SelectedUE4SS $source $dest $selection
+ $lua=Get-Content -LiteralPath (Join-Path $dest 'Mods/AC8SourceInit/Scripts/installation_mode.lua') -Raw
+ if($lua.Trim() -cne "return {mode='$mode',hotas=true}"){throw 'HOTAS option lost while staging'}
+ $pattern=Get-FeatureReadinessPattern $selection
+ $base="[AC8SourceInit] SOURCE_APPLIED mode=$mode reason=test verified=$($selection.ExpectedFields) written=8000"
+ if($base -match $pattern -or "$base hotas_stats=130 hotas_ammo=0" -match $pattern -or "$base hotas_stats=130 hotas_ammo=7681" -notmatch $pattern){
+  throw 'HOTAS readiness did not require both field groups'
+ }
+}
+Set-Content -LiteralPath $hotasPath -Value 'enabled=true' -Encoding ASCII
+$caught=$false;try{$null=Read-AC8HotasWeaponStats $hotasPath}catch{$caught=$true};if(!$caught){throw 'Invalid HOTAS setting accepted'}
 foreach($flag in @(0,1)){
  $cfg=Join-Path $tempRoot 'legacy.ini';Set-Content $cfg "missile_enhancement=$flag"
  $parsed=Read-FeatureSettings $cfg;$expected=if($flag){'full'}else{'none'}

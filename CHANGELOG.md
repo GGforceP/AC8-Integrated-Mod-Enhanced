@@ -1,3 +1,8 @@
+## 2.6.1
+
+- Added an opt-in HOTAS preset for player weapon lock-on range, reserve ammunition and damage.
+- The installation panel saves the option independently of the three missile modes. The source initializer merges overlapping values before a verified transaction.
+
 ## 2.6.0
 
 - Ported the native input, camera and helmet-targeting hooks to Steam 1.01.002 (Build 26002268).

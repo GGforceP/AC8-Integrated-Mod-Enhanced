@@ -1,6 +1,8 @@
-# AC8 Integrated Mod Enhanced v2.6.0
+# AC8 Integrated Mod Enhanced v2.6.1
 
-**Steam 1.01.002, Build 26002268. Offline single-player only.** Enhanced ports the v2.5.2 flight input, camera and helmet-targeting hooks to this build. [v2.6.0 release notes](docs/RELEASE-v2.6.0.md)
+**Steam 1.01.002, Build 26002268. Offline single-player only.** v2.6.1 adds an optional HOTAS weapon preset. v2.6.0 ported the v2.5.2 flight input, camera and helmet-targeting hooks to this build. [v2.6.1 release notes](docs/RELEASE-v2.6.1.md) · [v2.6.0 release notes](docs/RELEASE-v2.6.0.md)
+
+Enable **HOTAS weapon stats** under the installation choices on the left of the launcher and save. It is off by default and takes effect on the next offline launch. The preset applies lock-on range, reserve ammunition and damage to player weapons. It works with all three installation modes. For example, 6AAM gets a 10 km lock-on range, twice the reserve and 200 direct damage. Actual missile reach still depends on speed and flight lifetime. [Modern Missile Mod by AquilaZGame](https://www.nexusmods.com/acecombat8wingsoftheve/mods/154?tab=description)
 
 **2.5.2:** extra UE4SS mods keep the asset files in their own folders (for example PW-MkI), and deployed extra mods are no longer archived after every session. **2.5.1:** a Windows setup program with one-click updates from GitHub, self-checks and repair, and a Steam launch option that never needs changing again; WAR is now the default flight control (F4 switches to PEACE). Other UE4SS mods can be used alongside (add a zip or folder in the launcher), a "save flight records" switch in the launcher (off by default), and sessions no longer copy the DLLs. **2.4.2:** fixes the keyboard-takeover lag in WAR. Since 2.4.1 the nose reference gun cross can be switched with **Alt+F7**.
 
@@ -16,9 +18,9 @@ Also included:
 
 [2.5.2 changes](docs/RELEASE-v2.5.2.md) · [2.5.1 changes](docs/RELEASE-v2.5.1.md) · [the installed app](docs/APP.md) · [2.4.2 changes](docs/RELEASE-v2.4.2.md) · [2.4.1 changes](docs/RELEASE-v2.4.1.md) · [2.4.0 changes (English summary at the end)](docs/RELEASE-v2.4.0.md).
 
-Close the game and launcher and run **AC8-Integrated-Setup-v2.6.0.exe**. Setup upgrades the existing v2.5.2 installation in place and retains player data and the Steam launch entry. The first Enhanced setup installs the fork’s update key. Later updates use this repository’s stable releases from main. [Downloads](https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced/releases/latest)
+Close the game and launcher and run **AC8-Integrated-Setup-v2.6.1.exe**. Setup upgrades an existing v2.6.0 or v2.5.2 installation in place and retains player data and the Steam launch entry. The first Enhanced setup installs the fork’s update key. Later updates use this repository’s stable releases from main. [Downloads](https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced/releases/latest)
 
-For a portable installation, extract **AC8-Integrated-v2.6.0-share.zip** to a new folder outside the game, run AC8 Integrated.exe or Setup.cmd, and paste the generated Steam launch option.
+For a portable installation, extract **AC8-Integrated-v2.6.1-share.zip** to a new folder outside the game, run AC8 Integrated.exe or Setup.cmd, and paste the generated Steam launch option.
 
 A saved PEACE selection moves to WAR once with 2.5; switching back with F4 or `control_mode=0` is kept afterwards.
 

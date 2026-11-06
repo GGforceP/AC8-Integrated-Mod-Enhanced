@@ -7,7 +7,7 @@ function Get-AC8GuiSavedPath([string]$Root,[string]$Name){
  if(Test-Path -LiteralPath $path -PathType Leaf){$text=Get-Content -LiteralPath $path -Raw -Encoding UTF8;if($null -ne $text){return $text.Trim()}}
  return ''
 }
-function Save-AC8GuiSettings([string]$Root,[string]$GameRoot,[string]$Steam,[ValidateSet('guidance','full','none')][string]$MissileMode){
+function Save-AC8GuiSettings([string]$Root,[string]$GameRoot,[string]$Steam,[ValidateSet('guidance','full','none')][string]$MissileMode,[Nullable[bool]]$HotasWeaponStats){
  $option='"'+(Get-AC8SteamEntry $Root)+'" %command%'
  $data=Get-AC8DataRoot $Root
  $values=[ordered]@{
@@ -16,6 +16,7 @@ function Save-AC8GuiSettings([string]$Root,[string]$GameRoot,[string]$Steam,[Val
   'features.ini'=('missile_mode='+$MissileMode)
   'Steam-Launch-Option.txt'=$option
  }
+ if($null -ne $HotasWeaponStats){$values['hotas-weapon-stats.ini']='enabled='+[int]$HotasWeaponStats}
  $original=@{};$temporary=@{}
  try {
   foreach($name in $values.Keys){
@@ -37,7 +38,7 @@ function Save-AC8GuiSettings([string]$Root,[string]$GameRoot,[string]$Steam,[Val
  return $option
 }
 function Invoke-AC8GuiAction {
- param([ValidateSet('Discover','Check','Save','Start','Recover','UpdateCheck','UpdateAuto')][string]$Action,[string]$Root,[string]$GamePath,[string]$SteamPath,[ValidateSet('guidance','full','none')][string]$MissileMode,[bool]$ConfirmRecovery=$false)
+ param([ValidateSet('Discover','Check','Save','Start','Recover','UpdateCheck','UpdateAuto')][string]$Action,[string]$Root,[string]$GamePath,[string]$SteamPath,[ValidateSet('guidance','full','none')][string]$MissileMode,[bool]$ConfirmRecovery=$false,[Nullable[bool]]$HotasWeaponStats)
  if($Action -in @('UpdateCheck','UpdateAuto')){return Invoke-AC8GuiUpdateCheck $Root ($Action -eq 'UpdateAuto')}
  if($Action -eq 'Discover'){
   $found=Find-AC8Installations -GamePath $GamePath -SteamPath $SteamPath
@@ -85,12 +86,15 @@ function Invoke-AC8GuiAction {
  if($Action -eq 'Save'){
   Assert-AC8WriteAccess (Get-AC8DataRoot $Root)
   Assert-AC8WriteAccess (Join-Path $game 'Game/Binaries/Win64')
-  $option=Save-AC8GuiSettings $Root $game $steam $MissileMode
-  return [pscustomobject]@{Success=$true;Title='设置已保存';Message=('已保存：'+(Get-AC8GuiModeLabel $MissileMode)+'。下次启动生效。首次设置或移动整合包后，请复制启动选项到 Steam。');GameRoot=$game;Option=$option}
+  $option=Save-AC8GuiSettings $Root $game $steam $MissileMode $HotasWeaponStats
+  $label=Get-AC8GuiModeLabel $MissileMode
+  if($HotasWeaponStats){$label+=' + HOTAS 武器数值'}
+  return [pscustomobject]@{Success=$true;Title='设置已保存';Message=('已保存：'+$label+'。下次启动生效。首次设置或移动整合包后，请复制启动选项到 Steam。');GameRoot=$game;Option=$option}
  }
  $savedGame=Get-AC8GuiSavedPath $Root 'game-path.txt';$savedSteam=Get-AC8GuiSavedPath $Root 'steam-path.txt'
  $savedFeatures=Read-FeatureSettings (Join-Path (Get-AC8DataRoot $Root) 'features.ini')
- if($savedGame -ne $game -or $savedSteam -ne $steam -or $savedFeatures.MissileMode -ne $MissileMode){Stop-AC8Problem 'UNSAVED' '当前选择尚未保存。' '先点击“保存设置”，再启动游戏。'}
+ $unsavedHotas=$null -ne $HotasWeaponStats -and (Read-AC8HotasWeaponStats (Join-Path (Get-AC8DataRoot $Root) 'hotas-weapon-stats.ini')) -ne $HotasWeaponStats
+ if($savedGame -ne $game -or $savedSteam -ne $steam -or $savedFeatures.MissileMode -ne $MissileMode -or $unsavedHotas){Stop-AC8Problem 'UNSAVED' '当前选择尚未保存。' '先点击“保存设置”，再启动游戏。'}
  & (Join-Path $Root 'Launch-AC8-via-Steam.ps1')
  return [pscustomobject]@{Success=$true;Title='已发送启动请求';Message='Steam 将执行云同步并启动游戏。是否成功进入游戏，请以 Steam 和游戏窗口为准；保留启动控制台以便退出后清理。';GameRoot=$game;Option=$null}
 }
