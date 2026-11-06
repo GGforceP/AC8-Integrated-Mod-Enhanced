@@ -33,19 +33,17 @@ function New-TestRelease([string]$Version,[scriptblock]$Change={},[string]$KeyXm
  [IO.Compression.ZipFile]::CreateFromDirectory($dir,$zip,[IO.Compression.CompressionLevel]::Fastest,$true)
  return $zip
 }
-function New-TestFeed([string]$Zip,[string]$Tag='',$Signer=$rsa,[scriptblock]$EditManifest={}){
+function New-TestFeed([string]$Zip,[string]$Tag='',$Signer=$rsa,[scriptblock]$EditManifest={},[string]$Branch='main'){
  $name=[IO.Path]::GetFileName($Zip);$version=([regex]::Match($name,'^AC8-Integrated-v(.+)-share\.zip$')).Groups[1].Value
  $feed=Join-Path $fixture ('feed-'+[guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $feed | Out-Null
  Copy-Item -LiteralPath $Zip -Destination $feed
- $manifest=[ordered]@{schema=1;product='AC8-Integrated';version=$version;asset=$name;sha256=(Get-FileHash -LiteralPath $Zip).Hash;size=(Get-Item -LiteralPath $Zip).Length}
+ $manifest=[ordered]@{schema=1;product='AC8-Integrated';channel=$Branch;version=$version;asset=$name;sha256=(Get-FileHash -LiteralPath $Zip).Hash;size=(Get-Item -LiteralPath $Zip).Length}
  & $EditManifest $manifest
  $bytes=(New-Object Text.UTF8Encoding($false)).GetBytes((ConvertTo-Json -InputObject ([pscustomobject]$manifest)))
  [IO.File]::WriteAllBytes((Join-Path $feed 'update-manifest.json'),$bytes)
  [IO.File]::WriteAllText((Join-Path $feed 'update-manifest.json.sig'),[Convert]::ToBase64String($Signer.SignData($bytes,'SHA256')))
  $tagName=if($Tag){$Tag}else{'v'+$version}
- $assets=@(foreach($file in $name,'update-manifest.json','update-manifest.json.sig'){[pscustomobject]@{name=$file;size=(Get-Item -LiteralPath (Join-Path $feed $file)).Length;browser_download_url=('https://github.com/CreeperUX/AC8-Integrated-Mod/releases/download/'+$tagName+'/'+$file)}})
- $release=ConvertTo-Json -Depth 5 -InputObject ([pscustomobject]@{tag_name=$tagName;html_url='https://example.invalid/releases/'+$tagName;assets=$assets})
- [IO.File]::WriteAllText((Join-Path $feed 'release.json'),$release);[IO.File]::WriteAllText((Join-Path $feed ('release-'+$tagName+'.json')),$release)
+ [IO.File]::WriteAllText((Join-Path $feed 'stable.txt'),$tagName)
  return $feed
 }
 function Invoke-TestHost([string]$Root,[string[]]$Arguments){
@@ -149,7 +147,9 @@ $refusals=@(
  @{Name='bad signature';Feed=(New-TestFeed $zip251 '' $other);Code='UPDATE_SIGNATURE'},
  @{Name='hash mismatch';Feed=(New-TestFeed $zip251 '' $rsa {param($m) $m.sha256='0'*64});Code='UPDATE_HASH'},
  @{Name='version differs from tag';Feed=(New-TestFeed $zip251 'v2.5.9');Code='UPDATE_MANIFEST'},
+ @{Name='unsafe channel pointer';Feed=(New-TestFeed $zip251 'v../2.5.1');Code='UPDATE_SOURCE'},
  @{Name='unlisted file';Feed=(New-TestFeed (New-TestRelease '2.5.1' {param($dir) [IO.File]::WriteAllText((Join-Path $dir 'extra.ps1'),'x')} -AfterList));Code='PACKAGE_INVALID'},
+ @{Name='release signed for another channel';Feed=(New-TestFeed $zip251 -Branch 'origin');Code='UPDATE_SOURCE'}
  @{Name='old package without host';Feed=(New-TestFeed (New-TestRelease '2.5.1' {param($dir) Remove-Item -LiteralPath (Join-Path $dir 'app') -Recurse}));Code='PACKAGE_INVALID'}
 )
 foreach($case in $refusals){
@@ -302,7 +302,7 @@ try{
  $bytes=[IO.File]::ReadAllBytes((Join-Path $out 'update-manifest.json'))
  Assert-True (Test-AC8UpdateSignature $bytes ([IO.File]::ReadAllText((Join-Path $out 'update-manifest.json.sig'))) $public) 'signed manifest verifies'
  $manifest=[Text.Encoding]::UTF8.GetString($bytes) | ConvertFrom-Json
- Assert-True ($manifest.version -eq '2.6.0' -and $manifest.sha256 -eq (Get-FileHash $signedZip).Hash -and $manifest.size -eq (Get-Item $signedZip).Length) 'manifest content'
+ Assert-True ($manifest.channel -ceq 'main' -and $manifest.version -eq '2.6.0' -and $manifest.sha256 -eq (Get-FileHash $signedZip).Hash -and $manifest.size -eq (Get-Item $signedZip).Length) 'manifest content'
  $bytes[10]=$bytes[10] -bxor 1;Assert-True (!(Test-AC8UpdateSignature $bytes ([IO.File]::ReadAllText((Join-Path $out 'update-manifest.json.sig'))) $public)) 'changed manifest must fail'
  $caught=$false;try{& (Join-Path $repo 'scripts\sign-release.ps1') -Zip $zip250 -PrivateKeyPath $private -OutDir (Join-Path $fixture 'signed2')}catch{$caught=$true}
  Assert-True $caught 'a package with another public key must not be signed'

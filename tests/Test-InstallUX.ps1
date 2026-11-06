@@ -28,6 +28,7 @@ if(@(Get-ChildItem -LiteralPath $w64 -Filter '.ac8-write-test-*').Count){throw '
 Expect-Code {Assert-AC8WriteAccess (Join-Path $root 'missing-parent')} 'WRITE_ACCESS'
 Pass 'write probe cleaned up; unwritable path diagnosed'
 $package=Join-Path $root '整合包';Copy-Item -LiteralPath $template -Destination $package -Recurse
+Copy-Item -LiteralPath (Join-Path $repo 'version.json') -Destination (Join-Path $package 'package-info.json')
 $fakeSteam=Join-Path $root 'steam.exe';Set-Content -LiteralPath $fakeSteam -Value 'fixture'
 & {
  $global:AC8UXAnswers=New-Object 'System.Collections.Generic.Queue[string]'
@@ -36,7 +37,7 @@ $fakeSteam=Join-Path $root 'steam.exe';Set-Content -LiteralPath $fakeSteam -Valu
  function Get-Process {param($Name,$ErrorAction) if($Name -eq 'steam'){return [pscustomobject]@{Path=$fakeSteam}}}
  function Get-ItemProperty {throw 'No registry access in fixture'}
  function Get-AC8FileHash {param($LiteralPath)
-  if($LiteralPath -eq $exe){return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}}
+  if($LiteralPath -eq $exe){return [pscustomobject]@{Hash=((Get-Content -LiteralPath (Join-Path $package 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json).game_sha256)}}
   Microsoft.PowerShell.Utility\Get-FileHash -LiteralPath $LiteralPath
  }
  & (Join-Path $package 'Setup.ps1')

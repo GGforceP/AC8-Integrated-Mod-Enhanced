@@ -26,7 +26,14 @@ def build(runtime_root,native_dll,output,launcher_exe=REPO/'native/build/AC8 Int
  for name in ('tools','models','licenses','docs'):
   shutil.copytree(REPO/name,output/name,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
  for name in ('README.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md'):shutil.copy2(REPO/name,output/name)
- shutil.copytree(REPO/'native',output/'source/MouseAim',ignore=shutil.ignore_patterns('build','test-runtime','__pycache__','*.pyc'))
+ native_source=output/'source/MouseAim'
+ shutil.copytree(REPO/'native',native_source,ignore=shutil.ignore_patterns('build','test-runtime','__pycache__','*.pyc'))
+ snapshot={
+  'source_version':version['version'],
+  'native_sha256':sha(dll).upper(),
+  'files':[{'path':p.relative_to(output).as_posix(),'sha256':sha(p)} for p in sorted(native_source.rglob('*')) if p.is_file()],
+ }
+ (output/'docs/SOURCE-SNAPSHOT.json').write_text(json.dumps(snapshot,indent=2)+'\n',encoding='utf-8')
  payload=output/'payload'
  manifest=[{'Path':str(p.relative_to(payload)),'SHA256':sha(p).upper()}for p in sorted(payload.rglob('*'))if p.is_file()]
  (output/'payload-manifest.json').write_text(json.dumps(manifest,indent=2))

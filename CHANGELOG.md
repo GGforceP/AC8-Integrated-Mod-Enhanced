@@ -1,3 +1,10 @@
+## 2.6.0
+
+- Ported the native input, camera and helmet-targeting hooks to Steam 1.01.002 (Build 26002268).
+- Setup, launcher and session read the same EXE fingerprint from the package metadata.
+- Enhanced setup upgrades an existing v2.5.2 installation in place and configures signed updates from the fork’s main branch.
+- Portable builds generate a SHA-256 snapshot of the shipped native source and DLL.
+
 ## 2.5.2
 
 - Extra-mod manager: Pak/IoStore files inside a mod folder are installed with the mod (PW-MkI: AC8OverrideLoader\payloads mounts them); only Pak files outside every mod folder are left out with a note. The zip's own UE4SS loader is still never installed.

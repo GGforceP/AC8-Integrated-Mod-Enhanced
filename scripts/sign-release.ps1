@@ -1,7 +1,7 @@
 # Write update-manifest.json and update-manifest.json.sig for a release zip; both are uploaded as release assets next to
-# the zip. The manifest names the zip, its SHA-256 and size; the signature is RSA-SHA256 (PKCS#1 v1.5, base64) over the
-# exact manifest bytes. The signature is checked against the public key inside the zip (app/update-key.xml), so a
-# package can never be published with a key that does not match.
+# the zip. The manifest identifies the main update channel, the zip, its SHA-256 and size.
+# The RSA-SHA256 signature (PKCS#1 v1.5, base64) covers the exact manifest bytes and is checked against the public
+# key inside the zip (app/update-key.xml).
 param([Parameter(Mandatory=$true)][string]$Zip,[Parameter(Mandatory=$true)][string]$PrivateKeyPath,[string]$OutDir='')
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Security,System.IO.Compression,System.IO.Compression.FileSystem
@@ -23,7 +23,7 @@ try{
 if($publicKey -match '<(D|P|Q|DP|DQ|InverseQ)>'){throw 'The packaged update key contains private key material.'}
 $sha=[Security.Cryptography.SHA256]::Create();$stream=[IO.File]::OpenRead($zipPath)
 try{$digest=[BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-','')}finally{$stream.Dispose();$sha.Dispose()}
-$manifest=[pscustomobject][ordered]@{schema=1;product='AC8-Integrated';version=$version;asset=$name;sha256=$digest;size=(New-Object IO.FileInfo($zipPath)).Length}
+$manifest=[pscustomobject][ordered]@{schema=1;product='AC8-Integrated';channel='main';version=$version;asset=$name;sha256=$digest;size=(New-Object IO.FileInfo($zipPath)).Length}
 $bytes=(New-Object Text.UTF8Encoding($false)).GetBytes((ConvertTo-Json -InputObject $manifest))
 $plain=[Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($PrivateKeyPath)),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)
 $signer=New-Object Security.Cryptography.RSACryptoServiceProvider;$signer.PersistKeyInCsp=$false

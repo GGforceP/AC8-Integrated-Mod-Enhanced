@@ -21,7 +21,7 @@ foreach($file in Get-ChildItem -LiteralPath $template -File -Recurse -Filter '*.
 Write-Host 'PASS SHA256 standard vector, literal brackets and stream release after errors'
 $package=Join-Path $root 'package';Copy-Item -LiteralPath $template -Destination $package -Recurse
 foreach($name in 'tools','models'){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $package -Recurse}
-Set-Content -LiteralPath (Join-Path $package 'package-info.json') -Value '{}'
+Copy-Item -LiteralPath (Join-Path $repo 'version.json') -Destination (Join-Path $package 'package-info.json')
 $payload=Join-Path $package 'payload'
 $manifest=@(Get-ChildItem -LiteralPath $payload -Recurse -File | ForEach-Object {[pscustomobject]@{Path=$_.FullName.Substring($payload.Length+1);SHA256=(Get-AC8FileHash $_.FullName).Hash}})
 ConvertTo-Json -InputObject $manifest -Depth 4 | Set-Content -LiteralPath (Join-Path $package 'payload-manifest.json')
@@ -33,7 +33,7 @@ Set-Content -LiteralPath (Join-Path $package 'game-path.txt') -Value $game -Enco
 Set-Content -LiteralPath (Join-Path $package 'steam-path.txt') -Value $steam -Encoding UTF8
 $worker=Join-Path $root 'isolated.ps1'
 @'
-param($Package,$Game,$Steam,$Action)
+param($Package,$Game,$Steam,$Action,[switch]$PreviousBuild)
 $ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue'
 Import-Module Microsoft.PowerShell.Management
 Import-Module Microsoft.PowerShell.Utility
@@ -43,7 +43,10 @@ if(Get-Command Get-FileHash -ErrorAction SilentlyContinue){throw 'Missing-comman
 . ([IO.Path]::Combine($Package,'PowerShell-Compat.ps1'))
 $global:AC8FixtureRealHash=(Get-Command Get-AC8FileHash).ScriptBlock
 function Get-AC8FileHash {param($LiteralPath)
- if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}}
+ if($PreviousBuild -and [IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){
+  return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}
+ }
+ if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash=((Get-Content -LiteralPath (Join-Path $package 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json).game_sha256)}}
  & $global:AC8FixtureRealHash -LiteralPath $LiteralPath
 }
 function Get-Process {param($Name,$ErrorAction) if($Name -eq 'steam'){return [pscustomobject]@{Id=1}}}
@@ -59,6 +62,10 @@ if($LASTEXITCODE -ne 0){throw 'Isolated full preflight failed'}
 if($before -ne (@(Get-AC8Snapshot $package) | ConvertTo-Json -Depth 4 -Compress)){throw 'Preflight changed package'}
 if(@(Get-ChildItem -LiteralPath $w64 -Force).Count -ne 1){throw 'Preflight staged files'}
 Write-Host 'PASS missing hash command, empty module path, auto-load disabled through full Session/CheckOnly chain'
+# The previous Build's executable hash must fail read-only before deployment.
+& $hostExe -NoProfile -ExecutionPolicy Bypass -File $worker $package $game $steam Session -PreviousBuild
+if($LASTEXITCODE -eq 0 -or @(Get-ChildItem -LiteralPath $w64 -Force).Count -ne 1){throw 'Previous Build was accepted or staged'}
+Write-Host 'PASS previous game Build refused by the launch preflight'
 # Existing state must be reported, never silently cleaned during CheckOnly.
 Set-Content -LiteralPath (Join-Path $package 'active-session.json') -Value '{"Id":"fixture"}'
 $before=@(Get-AC8Snapshot $package) | ConvertTo-Json -Depth 4 -Compress
@@ -88,7 +95,7 @@ try{
    $global:AC8FixtureRealHash=(Get-Command Get-AC8FileHash).ScriptBlock
    # Replace only the fake EXE's expected hash; all package files use real SHA256.
    function Get-AC8FileHash {param($LiteralPath)
-    if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}}
+    if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash=((Get-Content -LiteralPath (Join-Path $package 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json).game_sha256)}}
     & $global:AC8FixtureRealHash -LiteralPath $LiteralPath
    }
    function Get-Process {param($Name,$ErrorAction) return $null}

@@ -405,7 +405,7 @@ function Register-AC8App([string]$InstallRoot,[string]$Version,[string]$Uninstal
  $size=0;foreach($file in [IO.Directory]::GetFiles([IO.Path]::Combine($InstallRoot,'versions'),'*','AllDirectories')){$size+=(New-Object IO.FileInfo($file)).Length}
  $values=[ordered]@{DisplayName='AC8 Integrated';DisplayVersion=$Version;Publisher='CreeperUX';InstallLocation=$InstallRoot
   UninstallString=('"'+$powershell+'" -NoProfile -ExecutionPolicy Bypass -File "'+$hostScript+'" -Action Uninstall')
-  URLInfoAbout='https://github.com/CreeperUX/AC8-Integrated-Mod';HelpLink='https://github.com/CreeperUX/AC8-Integrated-Mod/issues'}
+  URLInfoAbout='https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced';HelpLink='https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced/issues'}
  if([IO.File]::Exists($icon)){$values['DisplayIcon']=$icon}
  foreach($name in $values.Keys){Set-ItemProperty -LiteralPath $UninstallKey -Name $name -Value $values[$name]}
  foreach($name in 'NoModify','NoRepair'){New-ItemProperty -LiteralPath $UninstallKey -Name $name -Value 1 -PropertyType DWord -Force | Out-Null}
@@ -440,30 +440,61 @@ function Test-AC8AppRegistered([string]$InstallRoot,[string]$UninstallKey='HKCU:
 
 # ---- updates (GitHub releases, signed manifest) ----
 function Get-AC8ReleaseInfo([string]$Feed='',[string]$Tag=''){
- # Latest stable release, or the release of one tag (repair). $Feed: a local folder with release.json and the assets
- # (tests); the manifest signature is checked the same way.
- if($Feed){
-  $name=if($Tag){'release-'+$Tag+'.json'}else{'release.json'}
-  return [IO.File]::ReadAllText([IO.Path]::Combine($Feed,$name)) | ConvertFrom-Json
- }
+ # Main selects the stable tag. Repair can select its installed tag directly.
  [Net.ServicePointManager]::SecurityProtocol=[Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
- $uri='https://api.github.com/repos/CreeperUX/AC8-Integrated-Mod/releases/'+$(if($Tag){'tags/'+[Uri]::EscapeDataString($Tag)}else{'latest'})
- try{return Invoke-RestMethod -Uri $uri -Headers @{'User-Agent'='AC8-Integrated-Updater';'Accept'='application/vnd.github+json'} -TimeoutSec 30 -UseBasicParsing}
- catch{Stop-AC8App 'UPDATE_NETWORK' ('无法连接 GitHub：'+$_.Exception.Message) '请检查网络后重试。只访问 GitHub 发布页，不上传任何数据。'}
-}
-function Save-AC8ReleaseAsset($Release,[string]$Name,[string]$Destination,[string]$Feed='',[long]$MaxBytes=262144){
- $asset=@($Release.assets | Where-Object {[string]$_.name -ceq $Name})
- if($asset.Count -ne 1){Stop-AC8App 'UPDATE_ASSET' ('发布中缺少 '+$Name+'。') '这个版本可能不支持自动更新，请到 GitHub 发布页手动下载。'}
- if([long]$asset[0].size -gt $MaxBytes){Stop-AC8App 'UPDATE_ASSET' ($Name+' 大小异常，已拒绝。')}
- if($Feed){[IO.File]::Copy([IO.Path]::Combine($Feed,$Name),$Destination,$true)}
- else{
-  $url=[string]$asset[0].browser_download_url
-  if(!$url.StartsWith('https://github.com/CreeperUX/AC8-Integrated-Mod/releases/download/',[StringComparison]::Ordinal)){Stop-AC8App 'UPDATE_SOURCE' '下载地址不是本项目的 GitHub 发布，已拒绝。'}
-  $ProgressPreference='SilentlyContinue'
-  try{Invoke-WebRequest -Uri $url -OutFile $Destination -UseBasicParsing -TimeoutSec 600 -Headers @{'User-Agent'='AC8-Integrated-Updater'}}
-  catch{Stop-AC8App 'UPDATE_NETWORK' ('下载 '+$Name+' 失败：'+$_.Exception.Message) '请检查网络后重试。'}
+ if(!$Tag){
+  if($Feed){$pointer=[IO.File]::ReadAllText([IO.Path]::Combine($Feed,'stable.txt'))}
+  else{
+   $uri='https://raw.githubusercontent.com/GGforceP/AC8-Integrated-Mod-Enhanced/refs/heads/main/updates/stable.txt'
+   try{$pointer=(Invoke-WebRequest -Uri $uri -Headers @{'User-Agent'='AC8-Integrated-Updater'} -TimeoutSec 30 -UseBasicParsing).Content}
+   catch{Stop-AC8App 'UPDATE_NETWORK' ('无法读取 GitHub main 更新通道：'+$_.Exception.Message) '请检查网络后重试。'}
+   if($pointer -is [byte[]]){$pointer=[Text.Encoding]::UTF8.GetString($pointer)}
+  }
+  $Tag=([string]$pointer).Trim()
+  if($Tag -cnotmatch '^v[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}$'){Stop-AC8App 'UPDATE_SOURCE' 'main 更新通道的正式版本标签无效。'}
  }
- if((New-Object IO.FileInfo($Destination)).Length -ne [long]$asset[0].size){Stop-AC8App 'UPDATE_ASSET' ($Name+' 下载不完整。') '请重试。'}
+ if($Tag -cnotmatch '^v(.+)$' -or !(Test-AC8AppVersionName $Matches[1])){
+  Stop-AC8App 'UPDATE_SOURCE' '请求的版本标签无效。'
+ }
+ return [pscustomobject]@{tag_name=$Tag;html_url=('https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced/releases/tag/'+$Tag)}
+}
+function Save-AC8ReleaseAsset([string]$Tag,[string]$Name,[string]$Destination,[string]$Feed='',[long]$MaxBytes=262144){
+ if($Feed){
+  $path=[IO.Path]::Combine($Feed,$Name)
+  if(![IO.File]::Exists($path)){Stop-AC8App 'UPDATE_ASSET' ('发布中缺少 '+$Name+'。')}
+  if((New-Object IO.FileInfo($path)).Length -gt $MaxBytes){Stop-AC8App 'UPDATE_ASSET' ($Name+' 大小异常，已拒绝。')}
+  [IO.File]::Copy($path,$Destination,$true)
+  return
+ }
+ $url='https://github.com/GGforceP/AC8-Integrated-Mod-Enhanced/releases/download/'+$Tag+'/'+$Name
+ $request=[Net.HttpWebRequest]::Create($url)
+ $request.UserAgent='AC8-Integrated-Updater'
+ $request.Timeout=30000
+ $request.ReadWriteTimeout=30000
+ try{
+  $response=$request.GetResponse()
+  try{
+   if($response.ResponseUri.Scheme -ne 'https'){Stop-AC8App 'UPDATE_SOURCE' '发布文件的下载需要 HTTPS。'}
+   if($response.ContentLength -gt $MaxBytes){Stop-AC8App 'UPDATE_ASSET' ($Name+' 大小异常，已拒绝。')}
+   $inputStream=$response.GetResponseStream()
+   try{
+    $outputStream=[IO.File]::Create($Destination)
+    try{
+     $buffer=New-Object byte[] 65536
+     while(($read=$inputStream.Read($buffer,0,$buffer.Length)) -gt 0){
+      if($outputStream.Length+$read -gt $MaxBytes){Stop-AC8App 'UPDATE_ASSET' ($Name+' 大小异常，已拒绝。')}
+      $outputStream.Write($buffer,0,$read)
+     }
+     if($response.ContentLength -ge 0 -and $outputStream.Length -ne $response.ContentLength){
+      Stop-AC8App 'UPDATE_ASSET' ($Name+' 下载不完整。') '请重试。'
+     }
+    }finally{$outputStream.Dispose()}
+   }finally{$inputStream.Dispose()}
+  }finally{$response.Dispose()}
+ }catch{
+  if($_.Exception.Data['AC8Code']){throw}
+  Stop-AC8App 'UPDATE_NETWORK' ('下载 '+$Name+' 失败：'+$_.Exception.Message) '请检查网络后重试。'
+ }
 }
 function Test-AC8UpdateSignature([byte[]]$Data,[string]$Signature,[string]$KeyPath){
  # RSA-SHA256 (PKCS#1 v1.5) over the exact manifest bytes with the public key of this installation.
@@ -485,22 +516,23 @@ function Get-AC8UpdateOffer([string]$InstallRoot,[string]$Feed='',[string]$Tag='
  $version=$Matches[1]
  $cache=[IO.Path]::Combine($InstallRoot,'data','update-cache','incoming-'+[guid]::NewGuid().ToString('N'));[void][IO.Directory]::CreateDirectory($cache)
  $manifestPath=[IO.Path]::Combine($cache,'update-manifest.json');$signaturePath=$manifestPath+'.sig'
- Save-AC8ReleaseAsset $release 'update-manifest.json' $manifestPath $Feed
- Save-AC8ReleaseAsset $release 'update-manifest.json.sig' $signaturePath $Feed
+ Save-AC8ReleaseAsset $tagName 'update-manifest.json' $manifestPath $Feed
+ Save-AC8ReleaseAsset $tagName 'update-manifest.json.sig' $signaturePath $Feed
  $bytes=[IO.File]::ReadAllBytes($manifestPath)
  if(!(Test-AC8UpdateSignature $bytes ([IO.File]::ReadAllText($signaturePath)) ([IO.Path]::Combine($InstallRoot,'trust','update-key.xml')))){
   Stop-AC8App 'UPDATE_SIGNATURE' '更新清单的签名无效，已拒绝。' '请稍后重试；如果持续出现，请到 GitHub 发布页手动下载安装程序。'
  }
  $manifest=(New-Object Text.UTF8Encoding($false)).GetString($bytes) | ConvertFrom-Json
+ if([string]$manifest.channel -cne 'main'){Stop-AC8App 'UPDATE_SOURCE' '更新清单不属于 Enhanced 的 main 更新通道。'}
  $asset='AC8-Integrated-v'+$version+'-share.zip'
  if($manifest.schema -ne 1 -or [string]$manifest.product -ne 'AC8-Integrated' -or [string]$manifest.version -ne $version -or [string]$manifest.asset -ne $asset -or [string]$manifest.sha256 -notmatch '^[0-9A-Fa-f]{64}$' -or [long]$manifest.size -le 0){
   Stop-AC8App 'UPDATE_MANIFEST' '更新清单与发布不一致，已拒绝。'
  }
- return [pscustomobject]@{Version=$version;Tag=$tagName;Manifest=$manifest;Release=$release;Cache=$cache;NotesUrl=[string]$release.html_url}
+ return [pscustomobject]@{Version=$version;Tag=$tagName;Manifest=$manifest;Cache=$cache;NotesUrl=[string]$release.html_url}
 }
 function Save-AC8UpdatePackage([string]$InstallRoot,$Offer,[string]$Feed=''){
  $zip=[IO.Path]::Combine($Offer.Cache,[string]$Offer.Manifest.asset)
- Save-AC8ReleaseAsset $Offer.Release ([string]$Offer.Manifest.asset) $zip $Feed ([long]$Offer.Manifest.size)
+ Save-AC8ReleaseAsset $Offer.Tag ([string]$Offer.Manifest.asset) $zip $Feed ([long]$Offer.Manifest.size)
  if((New-Object IO.FileInfo($zip)).Length -ne [long]$Offer.Manifest.size -or (Get-AC8AppHash $zip) -ne ([string]$Offer.Manifest.sha256).ToUpperInvariant()){
   Stop-AC8App 'UPDATE_HASH' '下载的安装包与签名清单不符，已拒绝。' '请重试；网络或代理可能改动了文件。'
  }

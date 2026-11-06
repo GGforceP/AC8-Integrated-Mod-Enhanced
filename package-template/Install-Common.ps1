@@ -19,6 +19,17 @@ function Resolve-AC8GameRoot([string]$InputPath) {
  }
  Stop-AC8Problem 'GAME_PATH' '未在所选位置找到 AC8 游戏。' 'Steam → 游戏 → 管理 → 浏览本地文件，复制打开的文件夹路径。输入 Q 可取消。'
 }
+function Assert-AC8GameBuild([string]$PackageRoot,[string]$GameExe) {
+ try{$info=Get-Content -LiteralPath (Join-Path $PackageRoot 'package-info.json') -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop}
+ catch{Stop-AC8Problem 'PACKAGE_BUILD' '无法读取安装包的游戏版本信息。' '请检查并修复或重新下载完整安装包。'}
+ $build=[string]$info.game_build;$hash=[string]$info.game_sha256
+ if($build -notmatch '^\d+$' -or $hash -notmatch '^[0-9A-Fa-f]{64}$'){
+  Stop-AC8Problem 'PACKAGE_BUILD' '安装包的游戏版本信息无效。' '请检查并修复或重新下载完整安装包。'
+ }
+ if(!(Test-Path -LiteralPath $GameExe -PathType Leaf) -or (Get-AC8FileHash -LiteralPath $GameExe).Hash -ne $hash){
+  Stop-AC8Problem 'GAME_BUILD' '游戏版本与本包适配版本不一致。' ("本包适配 Steam Build $build，请核对游戏版本。")
+ }
+}
 function Assert-AC8PackageLocation([string]$PackageRoot,[string]$GameRoot) {
  $package=[IO.Path]::GetFullPath($PackageRoot).TrimEnd('\','/')
  $game=[IO.Path]::GetFullPath($GameRoot).TrimEnd('\','/')

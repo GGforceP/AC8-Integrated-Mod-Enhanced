@@ -64,9 +64,7 @@ function Invoke-AC8GuiAction {
  }
  & (Join-Path $Root 'Check-Package.ps1') -PackageRoot $Root
  $exe=Join-Path $game 'Game/Binaries/Win64/AceCombat8.exe'
- if((Get-AC8FileHash -LiteralPath $exe).Hash -ne '51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'){
-  Stop-AC8Problem 'GAME_BUILD' '游戏版本与本包适配版本不一致。' '本包适配 Build 25201480，请核对游戏版本。'
- }
+ Assert-AC8GameBuild $Root $exe
  $steam=$SteamPath.Trim().Trim('"')
  if(!$steam -or !(Test-Path -LiteralPath $steam -PathType Leaf) -or [IO.Path]::GetFileName($steam) -ine 'steam.exe'){
   Stop-AC8Problem 'STEAM_PATH' '请选择有效的 steam.exe。' '点击 Steam 路径右侧的选择按钮，找到 Steam 安装目录中的 steam.exe。'
@@ -99,13 +97,13 @@ function Invoke-AC8GuiAction {
 
 # Launcher app settings (2.5.0) in app-settings.json next to the player's other settings.
 function Read-AC8AppSettings([string]$Root){
- $values=[ordered]@{auto_update_check=$true;last_update_check_utc=''}
+ $values=[ordered]@{auto_update_check=$true;last_update_check_utc='';update_channel='enhanced-main'}
  $path=Join-Path (Get-AC8DataRoot $Root) 'app-settings.json'
  if(Test-Path -LiteralPath $path -PathType Leaf){
   try{
    $saved=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
    if($null -ne $saved.auto_update_check){$values.auto_update_check=[bool]$saved.auto_update_check}
-   if($saved.last_update_check_utc){$values.last_update_check_utc=[string]$saved.last_update_check_utc}
+   if($saved.update_channel -ceq $values.update_channel -and $saved.last_update_check_utc){$values.last_update_check_utc=[string]$saved.last_update_check_utc}
   }catch{}
  }
  return $values
@@ -124,8 +122,8 @@ function Test-AC8UpdateCheckDue([string]$Root){
  return ([DateTime]::UtcNow-$last.ToUniversalTime()).TotalHours -ge 20
 }
 function Invoke-AC8GuiUpdateCheck([string]$Root,[bool]$Quiet,[string]$Feed=''){
- # Reads only the latest GitHub release (nothing is uploaded or downloaded). Installing goes through Host.ps1, which
- # checks the signed manifest and the package hash. A failed automatic check stays silent.
+ # Reads the stable tag from main. Host.ps1 verifies the signed release manifest and the package hash before installing.
+ # A failed automatic check stays silent.
  try{
   . (Join-Path $Root 'app\App-Core.ps1')
   $info=Get-Content -LiteralPath (Join-Path $Root 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json

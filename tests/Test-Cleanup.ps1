@@ -120,7 +120,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'package-template') -Destination $packag
 foreach($n in 'tools','models'){Copy-Item -LiteralPath (Join-Path $repo $n) -Destination $package -Recurse}
 $payload=Join-Path $package 'payload'
 Set-Content -LiteralPath (Join-Path $payload 'Game/Binaries/Win64/dwmapi.dll') -Value 'fixture loader'
-Set-Content -LiteralPath (Join-Path $package 'package-info.json') -Value '{}'
+Copy-Item -LiteralPath (Join-Path $repo 'version.json') -Destination (Join-Path $package 'package-info.json')
 Set-Content -LiteralPath (Join-Path $package 'game-path.txt') -Value $f.Game -Encoding UTF8
 $manifest=@(Get-ChildItem -LiteralPath $payload -File -Recurse | ForEach-Object {[pscustomobject]@{Path=$_.FullName.Substring($payload.Length+1);SHA256=(Get-FileHash -LiteralPath $_.FullName).Hash}})
 ConvertTo-Json -InputObject $manifest -Depth 5 | Set-Content -LiteralPath (Join-Path $package 'payload-manifest.json') -Encoding UTF8
@@ -131,7 +131,7 @@ try {
  & {
   function Get-Process {param($Name,$ErrorAction) if($Name -eq 'steam'){return [pscustomobject]@{Id=123}}}
   function Get-AC8FileHash {param($LiteralPath)
-   if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}}
+   if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash=((Get-Content -LiteralPath (Join-Path $package 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json).game_sha256)}}
    Microsoft.PowerShell.Utility\Get-FileHash -LiteralPath $LiteralPath
   }
   function Copy-Item {param($LiteralPath,$Destination,[switch]$Recurse,[switch]$Force)

@@ -43,7 +43,7 @@ try{
  Write-Host ('已安装 AC8 Integrated '+$version+'。默认飞控为 WAR，游戏中按 F4 可切换到 PEACE。') -ForegroundColor Green
  Write-Host '最后一步：把下面整行粘贴到 Steam → AC8 → 属性 → 通用 → 启动选项（替换原有内容）：'
  Write-Host $option -ForegroundColor Cyan
- try{Set-Clipboard -Value $option;Write-Host '（已复制到剪贴板）'}catch{}
+ if(!$Yes){try{Set-Clipboard -Value $option;Write-Host '（已复制到剪贴板）'}catch{}}
  Write-Host '以后从开始菜单的“AC8 Integrated”打开启动器；更新、检查并修复也在启动器里，卸载在 Windows 设置 → 应用。'
  if($import){Write-Host ('便携版仍在原处：'+$import+'。确认安装版正常后可以自行删除（其中 sessions 保存着旧的飞行记录和存档备份）。')}
  if(!$NoLaunch -and ($Yes -or (Read-Host '直接回车打开启动器；输入 N 结束') -ine 'N')){

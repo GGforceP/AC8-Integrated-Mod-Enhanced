@@ -4,13 +4,13 @@ $repo=Split-Path $PSScriptRoot -Parent;$template=Join-Path $repo 'package-templa
 . (Join-Path $template 'Gui-Core.ps1')
 function Get-Process {param($Name,$ErrorAction) return $null}
 function Get-AC8FileHash {param($LiteralPath)
- if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash='51510E2A520565DBE81FB0D569E95CD4393077ACAAA859371489B80B8128829F'}}
+ if([IO.Path]::GetFileName($LiteralPath) -eq 'AceCombat8.exe'){return [pscustomobject]@{Hash=((Get-Content -LiteralPath (Join-Path $package 'package-info.json') -Raw -Encoding UTF8 | ConvertFrom-Json).game_sha256)}}
  Microsoft.PowerShell.Utility\Get-FileHash -LiteralPath $LiteralPath
 }
 $root=Join-Path $repo ('native/test-runtime/gui-'+[guid]::NewGuid().ToString('N'))
 $package=Join-Path $root 'package';Copy-Item -LiteralPath $template -Destination $package -Recurse
 foreach($name in 'tools','models'){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $package -Recurse}
-Set-Content -LiteralPath (Join-Path $package 'package-info.json') -Value '{}'
+Copy-Item -LiteralPath (Join-Path $repo 'version.json') -Destination (Join-Path $package 'package-info.json')
 $payload=Join-Path $package 'payload'
 $manifest=@(Get-ChildItem -LiteralPath $payload -File -Recurse | ForEach-Object {[pscustomobject]@{Path=$_.FullName.Substring($payload.Length+1);SHA256=(Get-FileHash -LiteralPath $_.FullName).Hash}})
 ConvertTo-Json -InputObject $manifest -Depth 5 | Set-Content -LiteralPath (Join-Path $package 'payload-manifest.json') -Encoding UTF8
