@@ -1,0 +1,12 @@
+* text=auto
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+
+# Keep the pinned design-token snapshot and original font licenses byte-stable.
+package-template/ui/creeperux/tokens.json text eol=lf
+package-template/ui/creeperux/fonts/*.txt text eol=lf whitespace=-blank-at-eol
+*.ttf binary
+
+# Preserve upstream runtime font license text.
+package-template/payload/Game/Binaries/Win64/ue4ss/Mods/AC8MouseAim/Scripts/ui-fonts/*.txt text eol=lf whitespace=-blank-at-eol
