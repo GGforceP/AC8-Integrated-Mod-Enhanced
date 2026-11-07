@@ -8,15 +8,138 @@
 
 在启动器左侧「游戏与安装内容」的安装范围下方勾选 **启用 HOTAS 武器数值**，然后点「保存设置」。默认关闭，下次离线启动生效。这个预设可以和三种安装范围独立搭配，鼠标键盘也可使用。与完整强化重叠的数值以 HOTAS 为准。
 
-| 武器 | 锁定距离 | 备弹倍率 | 直接伤害 |
-|---|---:|---:|---:|
-| 标准导弹 MSL | 5 km | ×1 | 100 |
-| 6AAM | 10 km | ×2 | 200 |
-| HVAA | 40 km | ×2 | 200 |
-| GPB | 6.25 km | 单挂 ×2，双挂 ×3 | 500 |
-| LACM | 150 km | ×2 | 300 |
+按锁定距离、备弹和伤害这三类范围，原 HOTAS 1.1.0 预设的全部 35 个玩家武器条目均已覆盖，机炮按三个原始伤害型号分别列出。箭头为当前 Build 的原值 → HOTAS 目标值，备弹为原机型、改装等级储备量的乘数。单挂和双挂分别对应游戏的两套备弹字段。
 
-备弹倍率按机型和改装等级计算。锁定距离是游戏允许锁定的距离，弹体实际能飞多远还取决于所选模式的速度和寿命。MPBM 的这套伤害数值用于玩家弹体，独立的爆炸伤害区由游戏结算。[AquilaZGame 的 Modern Missile Mod](https://www.nexusmods.com/acecombat8wingsoftheve/mods/154?tab=description)
+| 类别 | 武器 | 锁定距离（km） | 备弹（单挂 / 双挂） | 直接伤害 | 范围伤害 |
+|---|---|---:|---:|---:|---:|
+| 空对空 | MSL | 2 → 5 | ×1 / ×1 | 40 → 100 | — |
+| 空对空 | 2AAM | 3 → 8 | ×1 / ×1 | 60 → 150 | — |
+| 空对空 | 4AAM | 4 → 10 | ×2 / ×2 | 80 → 200 | — |
+| 空对空 | 6AAM | 5 → 10 | ×2 / ×2 | 80 → 200 | — |
+| 空对空 | HCAA | 2.2 → 10 | ×2 / ×2 | 60 → 150 | — |
+| 空对空 | HPAA | 3.75 → 12 | ×2 / ×2 | 160 → 400 | — |
+| 空对空 | HVAA | 5 → 40 | ×2 / ×2 | 80 → 200 | — |
+| 空对空 | LAAM | 10 → 60 | ×2 / ×2 | 80 → 400 | — |
+| 空对空 | QAAM | 2.4 → 5 | ×2 / ×2 | 80 → 200 | — |
+| 空对空 | SAAM | 6 → 12 | ×2 / ×2 | 80 → 200 | — |
+| 空对空 | SASM | 2.4 → 8 | ×2 / ×2 | 50 → 125 | 30 → 60 |
+| 空对地 | 4AGM | 3 → 10 | ×3 / ×3 | 80 → 160 | — |
+| 空对地 | 6AGM | 3.5 → 10 | ×3 / ×3 | — | — |
+| 空对地 | 8AGM | 4 → 10 | ×3 / ×3 | — | — |
+| 空对地 | LACM | 10 → 150 | ×2 / ×2 | 100 → 300 | 100 → 200 |
+| 空对地 | LAGM | 6 → 100 | ×2 / ×2 | 60 → 180 | 60 → 120 |
+| 空对地 | LASM | 6 → 100 | ×2 / ×2 | 80 → 400 | 80 → 160 |
+| 炸弹 | GPB | 2.5 → 6.25 | ×2 / ×3 | 120 → 500 | — |
+| 炸弹 | SFFS | — | ×2 / ×2 | 40 → 100 | — |
+| 炸弹 | SOD | 5 → 12.5 | ×2 / ×2 | 100 → 150 | — |
+| 炸弹 | UGB | — | ×2 / ×2 | 75 → 200 | — |
+| 炸弹 | UGBL | — | ×2 / ×2 | 90 → 700 | — |
+| 炸弹 | XSDB | 3 → 7.5 | ×3 / ×3 | 60 → 100 | — |
+| 火箭 | RKT | — | ×4 / ×4 | 40 → 50 | — |
+| 机炮 | GUN_5 | — | ×2 / ×2 | 5 → 12.5 | — |
+| 机炮 | GUN_10 | — | ×2 / ×2 | 10 → 25 | — |
+| 机炮 | GUN_15 | — | ×2 / ×2 | 15 → 37.5 | — |
+| 机炮 | MGP | — | ×2 / ×2 | 5 → 12.5 | — |
+| 特殊武器 | MPBM | 3.6 → 20 | ×3 / ×6 | 100 → 4000 | — |
+| 电子战 | ECM | — | ×10 / ×10 | — | — |
+| 特殊武器 | EMLB | 100 → 250（原始字段） | ×10 / ×10 | 80 → 100 | — |
+| 电子战 | ESM | — | ×10 / ×10 | — | — |
+| 电子战 | IEWS | — | ×10 / ×10 | — | — |
+| 激光 | TLS | — | ×10 / ×10 | 40 → 50 | — |
+| 无人机 | UAVT | — | ×15 / ×30 | — | — |
+
+“—” 对应所选安装范围的基础数值。ECM、ESM、IEWS 和 UAVT 在本次三类参数范围内采用备弹倍率。MSL 与 2AAM 的备弹倍率为 ×1，其锁定距离和直接伤害按上表生效。
+
+EMLB 的 `LockonRange` 按原始字段 100 → 250 列出，单位及实际锁定效果留待该武器实测。
+
+| 其他伤害字段 | 武器 | 原值 → HOTAS |
+|---|---|---:|
+| `AntiShipDamageRate` | GUN_5 | 20 → 50 |
+| `AntiShipDamageRate` | GUN_10 | 20 → 50 |
+| `AntiShipDamageRate` | GUN_15 | 20 → 50 |
+| `AntiShipDamageRate` | MGP | 100 → 200 |
+| `AntiShipDamageRate` | EMLB | 100 → 200 |
+| `SlipDamage` | TLS | 18 → 45 |
+
+| 标准弹难度表 | 锁定距离（km） | 直接伤害 |
+|---|---:|---:|
+| C.STORY | 2.85 → 5 | 56 → 100 |
+| EASY | 2 → 5 | 40 → 100 |
+
+MPBM 的本次 HOTAS 伤害写入面向玩家弹体。其共用爆炸伤害区由游戏结算。锁定距离决定截获门槛，实际飞行距离还取决于当前模式的速度、寿命与目标运动。
+
+<details>
+<summary>展开完整强化的全部参数及与 HOTAS 叠加后的数值</summary>
+
+完整强化按下表设置各字段；仅比例引导模式使用其中的 `HomingForesightAmount` 行。相同字段、原值和目标值的武器合并显示，带后缀的名称标识游戏中的具体武器资源。表内采用游戏字段的原始单位。
+
+| 武器 / 资源 | 字段 | 单位 | 原值 | 完整强化 | 完整强化 + HOTAS |
+|---|---|---|---:|---:|---:|
+| MSL / QAAM | `Acceleration` | cm/s² | 13888.8887 | 17361.1108 | 17361.1108 |
+| MSL · C.STORY / MSL · EASY | `AccelerationKmph` | km/h/s | 500 | 625 | 625 |
+| 2AAM / 4AAM / 6AAM / HCAA / HPAA / HVAA / LAAM / MSL / QAAM / SAAM / MSL · C.STORY / MSL · EASY | `AreaOfEffectDamage` | 游戏原始值 | 0 | 30 | 30 |
+| SASM | `AreaOfEffectDamage` | 游戏原始值 | 30 | 30 | 60 |
+| 2AAM / 4AAM / 6AAM / HCAA / HPAA / HVAA / LAAM / MSL / QAAM / SAAM | `ExplosionRadius` | cm | 0 | 5000 | 5000 |
+| MSL · C.STORY / MSL · EASY | `ExplosionRadiusMeters` | m | 0 | 50 | 50 |
+| MSL · C.STORY / MSL · EASY | `HomingCloudThreshold` | 游戏原始值 | 0.300000012 | 0 | 0 |
+| MSL | `HomingCloudThreshold` | 游戏原始值 | 0.300000012 | 0 | 0 |
+| HPAA | `HomingForesightAmount` | 倍率 | 0 | 0.75 | 0.75 |
+| HCAA | `HomingForesightAmount` | 倍率 | 0 | 0.8 | 0.8 |
+| HVAA | `HomingForesightAmount` | 倍率 | 0 | 0.85 | 0.85 |
+| 4AAM / 6AAM / LAAM / SASM | `HomingForesightAmount` | 倍率 | 0 | 0.9 | 0.9 |
+| 2AAM | `HomingForesightAmount` | 倍率 | 0 | 0.95 | 0.95 |
+| MSL | `HomingForesightAmount` | 倍率 | 0 | 1 | 1 |
+| MSL · EASY | `HomingForesightAmount` | 倍率 | 0.100000001 | 1 | 1 |
+| SAAM | `HomingForesightAmount` | 倍率 | 0.100000001 | 0.95 | 0.95 |
+| MSL · C.STORY | `HomingForesightAmount` | 倍率 | 0.200000003 | 1 | 1 |
+| QAAM | `HomingForesightAmount` | 倍率 | 0.400000006 | 1 | 1 |
+| MSL · C.STORY / MSL · EASY | `HomingReductionInCloud` | 游戏原始值 | 0.300000012 | 0 | 0 |
+| MSL | `HomingReductionInCloud` | 游戏原始值 | 0.300000012 | 0 | 0 |
+| 4AAM | `LifeTime` | s | 20 | 25 | 25 |
+| 6AAM | `LifeTime` | s | 22.5 | 25 | 25 |
+| LAAM | `LifeTime` | s | 25 | 50 | 50 |
+| MSL / MSL · C.STORY / MSL · EASY | `LifeTime` | s | 9 | 15 | 15 |
+| MSL / MSL · C.STORY / MSL · EASY | `LockonAccelerationTime` | s | 1 | 2.75 | 2.75 |
+| QAAM | `LockonAngle` | ° | 120 | 160 | 160 |
+| MSL | `LockonAngle` | ° | 32.5 | 160 | 160 |
+| MSL · EASY | `LockonAngle` | ° | 36.25 | 160 | 160 |
+| MSL · C.STORY | `LockonAngle` | ° | 40 | 160 | 160 |
+| MSL / MSL · C.STORY / MSL · EASY | `LockonInitialSpeed` | 游戏原始值 | 60 | 40 | 40 |
+| MSL / MSL · C.STORY / MSL · EASY | `LockonMaximumSpeed` | 游戏原始值 | 60 | 640 | 640 |
+| LAAM | `LockonRange` | cm | 1000000 | 2000000 | 6000000 |
+| MSL | `LockonRange` | cm | 200000 | 240000 | 500000 |
+| 4AAM | `LockonRange` | cm | 400000 | 1000000 | 1000000 |
+| 6AAM | `LockonRange` | cm | 500000 | 1000000 | 1000000 |
+| MSL · EASY | `LockonRangeInMeters` | m | 2000 | 2400 | 5000 |
+| MSL · C.STORY | `LockonRangeInMeters` | m | 2850 | 2400 | 5000 |
+| MSL | `LockonRangeReductionInCloud` | 游戏原始值 | 0.200000003 | 0 | 0 |
+| MSL · C.STORY / MSL · EASY | `LockonRangeReductionInCloud` | 游戏原始值 | 0.200000003 | 0 | 0 |
+| QAAM | `MaxHomingAngle` | ° | 120 | 160 | 160 |
+| MSL | `MaxHomingAngle` | ° | 75 | 160 | 160 |
+| MSL · EASY | `MaxHomingAngle` | ° | 77.5 | 160 | 160 |
+| MSL · C.STORY | `MaxHomingAngle` | ° | 80 | 160 | 160 |
+| LAAM | `MaxLoadedCount` | 游戏原始值 | 2 | 4 | 4 |
+| MSL | `MaxRotationAngle` | °/s | 40 | 150 | 150 |
+| MSL · EASY | `MaxRotationAngle` | °/s | 50 | 150 | 150 |
+| MSL · C.STORY | `MaxRotationAngle` | °/s | 60 | 150 | 150 |
+| QAAM | `MaxRotationAngle` | °/s | 75 | 150 | 150 |
+| MSL · C.STORY / MSL · EASY | `ProximityFuseMeters` | m | 0 | 1 | 1 |
+| 2AAM / 4AAM / 6AAM / HCAA / HPAA / HVAA / LAAM / MSL / QAAM | `ProximityFuseRadiusSquared` | cm² | 0 | 10000 | 10000 |
+| MSL | `SelectionAssistAngle` | 游戏原始值 | 5 | 0 | 0 |
+| MSL | `SelectionAssistRange` | 游戏原始值 | 80000 | 0 | 0 |
+| MSL · C.STORY / MSL · EASY | `SpeedMaxKmph` | km/h | 3900 | 5250 | 5250 |
+| MSL | `SpeedMaximum` | cm/s | 108333.336 | 145833.34 | 145833.34 |
+| QAAM | `SpeedMaximum` | cm/s | 116666.672 | 145833.34 | 145833.34 |
+| LAAM | `TargetSelectionMidRange` | cm | 1000000 | 2000000 | 2000000 |
+| 2AAM / 4AAM / 6AAM / HCAA / HPAA / HVAA / LAAM / MSL / QAAM / SAAM / MSL · C.STORY / MSL · EASY | `bShouldDetonateOnMiss` | 游戏原始值 | false | true | true |
+| MSL / MSL · EASY | `damage` | 游戏原始值 | 40 | 80 | 100 |
+| MSL · C.STORY | `damage` | 游戏原始值 | 56 | 80 | 100 |
+
+原完整强化配置包含 375 项字段校验，其中 287 项有基础数值修改。上表列出了这些修改以及 HOTAS 对同一批字段的覆盖，并按相同字段和数值合并为 59 组。HOTAS 的其余写入见前述 35 武器表。
+
+</details>
+
+[AquilaZGame 的 Modern Missile Mod 1.1.0 HOTAS 来源](https://www.nexusmods.com/acecombat8wingsoftheve/mods/154?tab=description)
 
 ## 鼠标飞控
 
