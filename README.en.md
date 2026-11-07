@@ -6,6 +6,8 @@ Enable **HOTAS weapon stats** under the installation choices on the left of the 
 
 All 35 player-weapon entries in the supplied HOTAS preset are listed below, including three gun damage variants. Arrows show stock values on the pinned build and the HOTAS targets. Reserve multipliers apply to each aircraft and upgrade level, with separate single-rack and paired-rack counts.
 
+On 2026-11-07, a live Build 26002268 inspection read all four special-weapon slots in 36 player-aircraft parameter tables, including mission-specific entries and variants. All 31 special-weapon IDs were covered by HOTAS; the standard missile and three gun variants account for the remaining four entries above. No wholly unchanged weapon entry was found within this scope. Independent readback also verified 126 weapon fields and four difficulty fields, with reserve inspection covering all 31 levels per table. [Coverage evidence and limits](docs/WEAPON-COVERAGE-26002268.md)
+
 | Category | Weapon | Lock-on range (km) | Reserve (single / paired) | Direct damage | Area damage |
 |---|---|---:|---:|---:|---:|
 | AAM | MSL | 2 → 5 | ×1 / ×1 | 40 → 100 | — |
